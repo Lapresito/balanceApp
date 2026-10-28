@@ -43,6 +43,12 @@ td{padding:8px 4px;border-bottom:1px solid var(--line)} td:last-child{text-align
 .row{display:flex;gap:10px;flex-wrap:wrap}
 .nota{font-size:14px;color:var(--soft)}
 .link{color:var(--primary);font-weight:700}
+.lectura{background:var(--primary-soft);border-radius:12px;padding:14px 16px;display:flex;flex-direction:column;gap:8px}
+.lectura ul{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:6px}
+.guia{border:1px solid var(--line);border-radius:12px;padding:12px 16px}
+.guia summary{font-weight:700;cursor:pointer}
+.guia h3{font-size:16px;margin:12px 0 2px}
+.guia p{font-size:15px}
 </style>
 </head>
 <body>
@@ -84,7 +90,15 @@ td{padding:8px 4px;border-bottom:1px solid var(--line)} td:last-child{text-align
     <h2>Resultado</h2>
     <div class="grid" id="grid"></div>
     <table id="cocientes"></table>
-    <p class="nota">Los cocientes comparan el área de cada prueba contra la 1. Sirven para seguir a un paciente en el tiempo; no hay puntos de corte clínicos cargados.</p>
+    <div class="lectura">
+      <h2>Lectura automática</h2>
+      <ul id="lectura"></ul>
+      <p class="nota">Compara al paciente consigo mismo. La interpretación clínica es del profesional.</p>
+    </div>
+    <details class="guia">
+      <summary>Cómo leer estos resultados</summary>
+      <div id="guia"></div>
+    </details>
     <label class="f" for="obs">Observaciones (van en el informe)<textarea id="obs" placeholder="Por ejemplo: se mareó en la prueba 4, usó calzado, etc."></textarea></label>
     <p class="warn" id="pdfErr" hidden></p>
     <div class="row">
@@ -247,6 +261,42 @@ function cocientes() {
   });
 }
 
+// ── Lectura automática: describe al paciente contra sí mismo. Sin valores de referencia, porque no
+// existen para el celular en la cintura. El único criterio clínico es el de la prueba 4 sin completar,
+// que el protocolo del mCTSIB trata como señal para una evaluación vestibular, no como diagnóstico. ──
+const PARECIDOS = 1.2; // regla de redacción, no clínica: dos cocientes a menos de un 20 % se describen como "parecidos"
+function lectura() {
+  const r = resultados, out = [];
+  const veces = (x) => `${fmt(x, 1)} veces`;
+  r.forEach((ri, i) => { if (ri?.cortada) out.push(`No completó la prueba ${i + 1} (${CONDS[i].corto.toLowerCase()}): aguantó ${Math.round(ri.seg)} de 30 segundos.`); });
+  if (r[3]?.cortada) out.push("No completar la prueba 4 (ojos cerrados sobre la espuma) es una señal para hacer una evaluación vestibular completa. No es un diagnóstico: el protocolo permite hasta tres intentos por prueba, y el resultado depende mucho de la goma espuma que se use.");
+  const b = r[0];
+  if (!b?.m || b.cortada) { out.push("Sin la prueba 1 completa no hay base para comparar, así que no se calculan los cocientes."); return out; }
+  const q = (i) => (r[i]?.m ? r[i].m.area / b.m.area : null);
+  const vista = q(1), pies = q(2), oido = q(3);
+  if (vista != null && pies != null) {
+    out.push(`Al cerrar los ojos, el área de oscilación fue ${veces(vista)} la de la prueba 1. Sobre la espuma, con los ojos abiertos, fue ${veces(pies)}.`);
+    if (vista <= 1 && pies <= 1) out.push("Ni cerrar los ojos ni pararse sobre la espuma aumentaron su oscilación.");
+    else if (Math.max(vista, pies) / Math.max(Math.min(vista, pies), 0.01) < PARECIDOS) out.push("Perder la vista y perder la información de los pies le afectan de forma parecida.");
+    else if (vista > pies) out.push("Le afecta más perder la vista que perder la información de los pies: para sostenerse se apoya más en la vista.");
+    else out.push("Le afecta más perder la información de los pies que la vista: para sostenerse se apoya más en lo que sienten los pies.");
+  }
+  if (oido != null) out.push(`En la prueba 4, donde solo le queda el oído interno, el área fue ${veces(oido)} la de la prueba 1${r[3].cortada ? ", en el tramo que llegó a hacer" : ""}. Es la prueba más exigente: lo más útil es comparar este número entre evaluaciones.`);
+  out.push("Para ver la evolución, repetí la evaluación con la misma goma espuma y el celular en el mismo lugar, y compará los cocientes entre informes.");
+  return out;
+}
+
+const GUIA = [
+  ["Qué se midió", "El celular, atado a la cintura, registra cuánto se inclina el tronco del paciente, en grados, unas 50 veces por segundo. Estando parado quieto, todos oscilamos un poco; lo que importa es cuánto y cómo cambia según la prueba."],
+  ["Las cuatro pruebas", "Cada prueba le quita un sentido al equilibrio. Con los ojos cerrados (2) se pierde la vista. Sobre la goma espuma (3) los pies informan mal, así que se pierde la propiocepción. Con las dos cosas juntas (4) queda solo el oído interno. Si al quitar un sentido la oscilación crece mucho, el paciente se apoyaba en ese sentido."],
+  ["El dibujo", "Es el recorrido de la cintura visto desde arriba: hacia arriba y abajo es adelante y atrás; hacia los costados es izquierda y derecha. Cada cuadro mide 1 grado. Un dibujo chico y apretado en el centro es un paciente estable; uno grande y desparramado, uno que oscila mucho."],
+  ["La elipse verde", "Encierra la zona donde estuvo la cintura el 95 % del tiempo. Su área, en grados cuadrados, es el número principal de cada prueba."],
+  ["RMS AP y RMS ML", "Cuánto se alejó del centro, en promedio: AP es adelante y atrás, ML es hacia los costados."],
+  ["Velocidad media", "Cuántos grados recorrió por segundo en total. Aunque el dibujo sea chico, una velocidad alta muestra que el cuerpo está corrigiendo todo el tiempo."],
+  ["Los cocientes", "Cuántas veces más grande fue el área en cada prueba comparada con la prueba 1. Un cociente de 1 quiere decir que quitar ese sentido no cambió nada; uno de 4, que la oscilación se cuadruplicó."],
+  ["Qué no dice", "No dice si un valor es normal o patológico: para medir con el celular en la cintura todavía no hay valores de referencia publicados. Sirve para comparar al mismo paciente en el tiempo, siempre con la misma goma espuma."],
+];
+
 function mostrarResultados() {
   $("prueba").hidden = true; $("resultados").hidden = false;
   try { wake?.release(); } catch {}
@@ -261,6 +311,10 @@ function mostrarResultados() {
   });
   const tb = $("cocientes"); tb.textContent = "";
   cocientes().forEach((c) => { const tr = document.createElement("tr"); [`${c.k} (${c.sub})`, c.txt].forEach((t) => { const td = document.createElement("td"); td.textContent = t; tr.appendChild(td); }); tb.appendChild(tr); });
+  const ul = $("lectura"); ul.textContent = "";
+  lectura().forEach((t) => { const li = document.createElement("li"); li.textContent = t; ul.appendChild(li); });
+  const guia = $("guia"); guia.textContent = "";
+  GUIA.forEach(([t, txt]) => { const h = document.createElement("h3"), p = document.createElement("p"); h.textContent = t; p.textContent = txt; guia.append(h, p); });
   $("compartir").hidden = !navigator.canShare;
 }
 
@@ -308,18 +362,32 @@ function armarPDF() {
     doc.setTextColor(21, 35, 46); doc.text(c.txt, M + W, y, { align: "right" });
     doc.setDrawColor(210, 224, 234); doc.line(M, y + 2.5, M + W, y + 2.5); y += 9;
   });
-  doc.setFontSize(9.5); doc.setTextColor(79, 96, 108);
-  y += 2;
-  doc.splitTextToSize("Un cociente de 1 indica que sacar ese sentido no cambió la oscilación. Cuanto más alto, más dependía de él (en la prueba 4, menos le alcanza lo que le queda, el oído interno).", W).forEach((l) => { doc.text(l, M, y); y += 4.6; });
-  y += 6;
-  const obs = $("obs").value.trim();
-  doc.setFont("helvetica", "bold"); doc.setFontSize(13); doc.setTextColor(21, 35, 46); doc.text("Observaciones", M, y); y += 7;
-  doc.setFont("helvetica", "normal"); doc.setFontSize(10.5);
-  doc.splitTextToSize(obs || "—", W).forEach((l) => { doc.text(l, M, y); y += 5.2; });
-  y += 8;
-  doc.setFillColor(255, 243, 214); const aviso = doc.splitTextToSize("Prototipo sin validar. Los ángulos se estiman con el acelerómetro de un celular en la zona lumbar: sirven para comparar a un mismo paciente en el tiempo, no reemplazan una posturografía de plataforma. No se aplicaron puntos de corte clínicos.", W - 8);
-  doc.rect(M, y - 4, W, aviso.length * 4.6 + 6, "F"); doc.setFontSize(9.5); doc.setTextColor(21, 35, 46);
-  aviso.forEach((l) => { doc.text(l, M + 4, y + 1); y += 4.6; });
+  // Texto corrido con salto de página automático
+  const titulo = (t) => { if (y > 297 - M - 20) { doc.addPage(); y = M + 4; } y += 4; doc.setFont("helvetica", "bold"); doc.setFontSize(13); doc.setTextColor(21, 35, 46); doc.text(t, M, y); y += 7; };
+  const parrafo = (t, { x = M, ancho = W, tam = 10.5, color = [21, 35, 46], bold = false, sep = 2.5 } = {}) => {
+    doc.setFont("helvetica", bold ? "bold" : "normal"); doc.setFontSize(tam); doc.setTextColor(...color);
+    const alto = tam * 0.5;
+    doc.splitTextToSize(t, ancho).forEach((l) => { if (y > 297 - M) { doc.addPage(); y = M + 4; } doc.text(l, x, y); y += alto; });
+    y += sep;
+  };
+
+  titulo("Lectura automática");
+  lectura().forEach((t) => { doc.setFillColor(13, 99, 176); doc.circle(M + 1.2, y - 1.2, 0.8, "F"); parrafo(t, { x: M + 5, ancho: W - 5 }); });
+  parrafo("Compara al paciente consigo mismo. La interpretación clínica es del profesional.", { tam: 9.5, color: [79, 96, 108] });
+
+  titulo("Observaciones");
+  parrafo($("obs").value.trim() || "—");
+
+  titulo("Cómo leer este informe");
+  // El salto antes de cada título es para que no quede solo al pie de la página
+  GUIA.forEach(([t, txt]) => { if (y > 297 - M - 18) { doc.addPage(); y = M + 4; } parrafo(t, { bold: true, sep: 0.5 }); parrafo(txt, { tam: 10, color: [60, 74, 84] }); });
+
+  y += 4;
+  const aviso = "Prototipo sin validar. Los ángulos se estiman con el acelerómetro de un celular en la zona lumbar: sirven para comparar a un mismo paciente en el tiempo, no reemplazan una posturografía de plataforma. No se aplicaron puntos de corte clínicos.";
+  doc.setFontSize(9.5); const lineas = doc.splitTextToSize(aviso, W - 8);
+  if (y + lineas.length * 4.75 + 6 > 297 - M) { doc.addPage(); y = M + 4; }
+  doc.setFillColor(255, 243, 214); doc.rect(M, y - 4, W, lineas.length * 4.75 + 6, "F");
+  parrafo(aviso, { x: M + 4, ancho: W - 8, tam: 9.5 });
   const p2 = (n) => String(n).padStart(2, "0"); // hora local, no UTC
   const nombre = `posturografia-${f.getFullYear()}-${p2(f.getMonth() + 1)}-${p2(f.getDate())}-${p2(f.getHours())}${p2(f.getMinutes())}.pdf`;
   return { blob: doc.output("blob"), nombre };
