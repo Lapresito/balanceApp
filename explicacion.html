@@ -1,0 +1,378 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<style>[hidden]{display:none!important}body{margin:0}img{max-width:100%}</style>
+</head>
+<body>
+<title>Posturografía con el celular</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=IBM+Plex+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: informe de laboratorio de equilibrio — arriba la demo (4 estabilogramas en grilla + resultado), abajo la explicación en una columna de lectura */
+:root{
+  --bg:#F2F7FA;
+  --surface:#FFFFFF;
+  --ink:#15232E;
+  --ink-soft:#4F606C;
+  --line:#D2E0EA;
+  --primary:#0D63B0;
+  --primary-ink:#0A4A85;
+  --primary-soft:#E3F1FB;
+  --aqua:#0B7A6D;
+  --aqua-soft:#DEF5F0;
+  --sky:#2BA7D8;
+  --warn:#8A5A00;
+  --warn-soft:#FFF3D6;
+  --trace:#0D63B0;
+  --ellipse:#0B7A6D;
+  --grid:#E3ECF2;
+  --font-display:"Bricolage Grotesque","Trebuchet MS",system-ui,sans-serif;
+  --font-body:"Atkinson Hyperlegible","Segoe UI",system-ui,sans-serif;
+  --font-mono:"IBM Plex Mono",ui-monospace,"Cascadia Mono",Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0E1A23;--surface:#15252F;--ink:#E6EFF4;--ink-soft:#9DB1BE;--line:#27404F;
+  --primary:#4FA3E8;--primary-ink:#8CC4F2;--primary-soft:#173A55;--aqua:#3FC9B2;--aqua-soft:#143B37;--sky:#5BC2EA;
+  --warn:#F2C56B;--warn-soft:#3A2E12;--trace:#6FB6F0;--ellipse:#3FC9B2;--grid:#1F3341;color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0E1A23;--surface:#15252F;--ink:#E6EFF4;--ink-soft:#9DB1BE;--line:#27404F;
+  --primary:#4FA3E8;--primary-ink:#8CC4F2;--primary-soft:#173A55;--aqua:#3FC9B2;--aqua-soft:#143B37;--sky:#5BC2EA;
+  --warn:#F2C56B;--warn-soft:#3A2E12;--trace:#6FB6F0;--ellipse:#3FC9B2;--grid:#1F3341;color-scheme:dark}
+
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--font-body);font-size:16px;line-height:1.55;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:28px 64px}
+.wrap{max-width:1080px;margin:0 auto;display:flex;flex-direction:column;gap:40px}
+h1,h2,h3{font-family:var(--font-display);text-wrap:balance;margin:0;line-height:1.15}
+h1{font-size:clamp(30px,5vw,46px);font-weight:800;letter-spacing:-.01em}
+h2{font-size:clamp(22px,3vw,28px);font-weight:800}
+h3{font-size:18px;font-weight:600}
+p{margin:0}
+.eyebrow{font-family:var(--font-mono);font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-soft)}
+.mono{font-family:var(--font-mono);font-variant-numeric:tabular-nums}
+.lede{font-size:18px;color:var(--ink-soft);max-width:64ch}
+header{display:flex;flex-direction:column;gap:12px}
+.tags{display:flex;gap:8px;flex-wrap:wrap}
+.tag{font-family:var(--font-mono);font-size:12px;padding:3px 10px;border-radius:999px;background:var(--primary-soft);color:var(--primary-ink)}
+.tag.warn{background:var(--warn-soft);color:var(--warn)}
+
+/* Demo */
+.demo{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:20px;display:flex;flex-direction:column;gap:18px}
+.demo-head{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;flex-wrap:wrap}
+.demo-head > div{display:flex;flex-direction:column;gap:4px;min-width:0}
+.controls{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.seg{display:flex;flex-wrap:wrap;border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.seg button{font:inherit;font-size:14px;border:0;background:transparent;color:var(--ink);padding:8px 12px;cursor:pointer;border-right:1px solid var(--line)}
+.seg button:last-child{border-right:0}
+.seg button[aria-pressed="true"]{background:var(--primary);color:#fff}
+.seg button:focus-visible,.btn:focus-visible{outline:3px solid var(--sky);outline-offset:2px}
+.btn{font:inherit;font-size:14px;font-weight:700;border:1px solid var(--primary);color:var(--primary-ink);background:var(--primary-soft);border-radius:10px;padding:8px 14px;cursor:pointer;display:inline-block;text-decoration:none}
+a{color:var(--primary-ink)}
+.conds{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px}
+@media (max-width:900px){.conds{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:460px){.conds{grid-template-columns:minmax(0,1fr)}}
+.cond{display:flex;flex-direction:column;gap:8px;min-width:0}
+.cond-title{display:flex;gap:8px;align-items:baseline}
+.cond-title .n{font-family:var(--font-mono);font-size:12px;color:var(--ink-soft)}
+.cond canvas{width:100%;aspect-ratio:1;max-width:100%;border:1px solid var(--line);border-radius:10px;background:var(--bg);display:block}
+.cond .sense{font-size:13px;color:var(--ink-soft)}
+dl.metrics{display:grid;grid-template-columns:1fr auto;gap:2px 10px;margin:0;font-size:13px}
+dl.metrics dt{color:var(--ink-soft)}
+dl.metrics dd{margin:0;text-align:right}
+.result{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:20px;border-top:1px solid var(--line);padding-top:18px}
+@media (max-width:760px){.result{grid-template-columns:minmax(0,1fr)}}
+.ratios{display:flex;flex-direction:column;gap:12px}
+.ratio{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px 12px;align-items:center}
+.ratio .lbl{font-size:14px}
+.ratio .lbl small{display:block;color:var(--ink-soft);font-size:12px}
+.ratio .val{font-family:var(--font-mono);font-weight:600;font-size:18px}
+.bar{grid-column:1/-1;height:10px;border-radius:5px;background:var(--grid);position:relative;overflow:hidden}
+.bar i{position:absolute;inset:0 auto 0 0;border-radius:5px;background:var(--aqua)}
+.bar i.top{background:var(--primary)}
+.reading{background:var(--primary-soft);border-radius:12px;padding:16px;display:flex;flex-direction:column;gap:8px}
+.reading p{font-size:15px}
+.reading .fine{font-size:13px;color:var(--ink-soft)}
+
+/* Texto */
+section.txt{display:flex;flex-direction:column;gap:14px;max-width:72ch}
+section.txt p,section.txt li{color:var(--ink)}
+ol.steps,ul.list{margin:0;padding-left:22px;display:flex;flex-direction:column;gap:8px}
+.formula{font-family:var(--font-mono);font-size:14px;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px 14px;overflow-x:auto;white-space:pre}
+.tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:12px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;min-width:560px;font-size:14px}
+th,td{text-align:left;padding:10px 14px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-family:var(--font-mono);font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-soft);font-weight:600}
+tr:last-child td{border-bottom:0}
+.state{font-family:var(--font-mono);font-size:12px;padding:2px 8px;border-radius:999px;white-space:nowrap}
+.state.ok{background:var(--aqua-soft);color:var(--aqua)}
+.state.part{background:var(--warn-soft);color:var(--warn)}
+.state.no{background:var(--grid);color:var(--ink-soft)}
+.callout{border-left:4px solid var(--warn);background:var(--warn-soft);padding:14px 16px;border-radius:0 10px 10px 0;display:flex;flex-direction:column;gap:6px}
+.callout p{color:var(--ink)}
+footer{font-size:13px;color:var(--ink-soft);max-width:72ch}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+<div class="wrap">
+  <header>
+    <span class="eyebrow">PMS · idea para el módulo de mareo</span>
+    <h1>Posturografía con el celular</h1>
+    <p class="lede">Lo mismo que mide BAP, sin aparato: el celular atado a la cintura registra cuánto oscila el paciente en cuatro pruebas de 30 segundos. Comparando las pruebas se ve si se sostiene más con la vista, con los pies o con el oído interno.</p>
+    <div class="tags"><span class="tag">Prototipo</span><span class="tag warn">Datos de ejemplo, no de pacientes</span><span class="tag">Sin validar</span></div>
+    <p><a class="btn" href="./">Ir a la prueba con el celular</a></p>
+  </header>
+
+  <section class="demo" aria-labelledby="demoTitulo">
+    <div class="demo-head">
+      <div>
+        <span class="eyebrow">Demo</span>
+        <h2 id="demoTitulo">Cuatro pruebas, un resultado</h2>
+        <p class="sense">Elegí un perfil de ejemplo para ver cómo cambia lo que se mide.</p>
+      </div>
+      <div class="controls">
+        <div class="seg" role="group" aria-label="Perfil de ejemplo" id="perfiles"></div>
+        <button class="btn" id="play">Reproducir</button>
+      </div>
+    </div>
+    <div class="conds" id="conds"></div>
+    <div class="result">
+      <div class="ratios" id="ratios"></div>
+      <div class="reading" id="reading"></div>
+    </div>
+  </section>
+
+  <section class="txt">
+    <span class="eyebrow">Cómo se hace</span>
+    <h2>El paciente, el celular y una goma espuma</h2>
+    <ol class="steps">
+      <li>El celular va <strong>atado a la cintura, en la zona lumbar baja</strong>, parado y con la pantalla hacia afuera. Sirve un cinturón de running o una faja elástica.</li>
+      <li>El paciente se para descalzo, con los pies juntos y los brazos al costado del cuerpo.</li>
+      <li>Hace las <strong>cuatro pruebas de 30 segundos</strong>: ojos abiertos en el piso, ojos cerrados en el piso, ojos abiertos sobre la goma espuma y ojos cerrados sobre la goma espuma. Es el test clínico estándar llamado <strong>mCTSIB</strong>.</li>
+      <li>Como con los ojos cerrados no ve la pantalla, el celular avisa con la voz cuándo empieza y cuándo termina cada prueba.</li>
+      <li>Al final la app muestra los cuatro estabilogramas (el dibujo de cómo osciló) y los tres cocientes.</li>
+    </ol>
+    <p>Cada prueba "apaga" un sentido. Con los ojos cerrados se pierde la <strong>vista</strong>. La goma espuma hace que los pies informen mal, así que se pierde la <strong>propiocepción</strong>. Con las dos cosas juntas, queda solo el <strong>oído interno</strong>. Si al sacar un sentido la oscilación crece mucho, el paciente se apoyaba en ese sentido.</p>
+  </section>
+
+  <section class="txt">
+    <span class="eyebrow">Qué se calcula</span>
+    <h2>Del sensor a los grados</h2>
+    <p>El acelerómetro del celular siente hacia dónde está la gravedad. Cuando el cuerpo se inclina, la gravedad "se corre" dentro del celular, y de ahí sale el ángulo de inclinación del tronco en dos direcciones: <strong>adelante y atrás</strong> (AP) y <strong>de costado</strong> (ML). Se registra unas 50 veces por segundo y se filtra el temblor rápido.</p>
+    <div class="formula">ángulo AP = atan2(g_z, g_y)        ángulo ML = atan2(g_x, g_y)
+se resta el promedio de la prueba: queda solo la oscilación</div>
+    <p>Con esa nube de puntos se calculan cuatro medidas por prueba:</p>
+    <ul class="list">
+      <li><strong>RMS AP y RMS ML</strong> (en grados): cuánto se aleja, en promedio, del centro en cada dirección.</li>
+      <li><strong>Velocidad media</strong> (grados por segundo): el largo total del recorrido dividido por la duración. Es la medida que más cambia con el control del equilibrio.</li>
+      <li><strong>Área de la elipse al 95 %</strong> (grados²): la elipse que encierra el 95 % de los puntos. Es la que se dibuja en verde en cada estabilograma.</li>
+    </ul>
+    <div class="formula">área 95 % = π · 5,991 · √(var_AP · var_ML − cov²)</div>
+    <p>Y tres cocientes contra la prueba 1, que es la línea de base:</p>
+    <ul class="list">
+      <li><strong>Vista</strong> = área prueba 2 ÷ área prueba 1. Es el cociente de Romberg.</li>
+      <li><strong>Pies</strong> = área prueba 3 ÷ área prueba 1.</li>
+      <li><strong>Oído interno</strong> = área prueba 4 ÷ área prueba 1.</li>
+    </ul>
+    <p>Un cociente de 1 quiere decir que sacar ese sentido no le cambió nada. Cuanto más alto, más dependía de él (o, en el caso del oído interno, más débil está lo que le queda).</p>
+  </section>
+
+  <section class="txt" style="max-width:none">
+    <span class="eyebrow">Comparación</span>
+    <h2>Lo que dice BAP y cómo quedaría en PMS</h2>
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th>Lo que dice BAP</th><th>En PMS</th><th>Cómo</th></tr></thead>
+        <tbody>
+          <tr><td>Si el paciente usa más la vista, la propiocepción o el oído interno</td><td><span class="state ok">Sí</span></td><td>Las cuatro pruebas y los tres cocientes de esta página.</td></tr>
+          <tr><td>Validada contra BRU</td><td><span class="state no">No, de entrada</span></td><td>Habría que medir a los mismos pacientes con una plataforma (BRU o de fuerza) y con PMS, y comparar.</td></tr>
+          <tr><td>No ocupa espacio, a domicilio, barata y portable</td><td><span class="state ok">Sí</span></td><td>Ni siquiera hace falta el aparato: el celular del paciente es el sensor.</td></tr>
+          <tr><td>Control de rehabilitación</td><td><span class="state ok">Sí</span></td><td>Repetir las pruebas cada tantas semanas y graficar la evolución en la ficha.</td></tr>
+          <tr><td>Inestabilidades con dudas diagnósticas</td><td><span class="state part">Con cuidado</span></td><td>Es un dato más para Felipe, no un diagnóstico.</td></tr>
+          <tr><td>Simuladores</td><td><span class="state part">En parte</span></td><td>Si "simuladores" son pacientes que exageran, se nota cuando les va peor en las pruebas fáciles que en las difíciles. Se marcaría como "patrón incoherente", nunca como acusación. Hay que confirmarlo con Felipe.</td></tr>
+          <tr><td>Riesgo de caídas por "LOS/A, LOS/B"</td><td><span class="state part">Falta el paper</span></td><td>LOS (cuánto se puede inclinar sin dar un paso) se mide bien. Qué son A y B y sus puntos de corte tienen que salir del paper de ellos.</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="txt">
+    <span class="eyebrow">Antes de usarlo con pacientes</span>
+    <h2>Lo que falta</h2>
+    <div class="callout">
+      <p><strong>No está validado.</strong> Los números sirven para comparar a un mismo paciente contra sí mismo en el tiempo. No hay puntos de corte cargados: no dice "normal" ni "patológico" hasta que salgan de bibliografía.</p>
+    </div>
+    <ul class="list">
+      <li><strong>El paper de BAP</strong> (Carmona, Zalazar, D'Albora y Bordabehere, "Portable Posturography: Validation of Variables in People Without Posture and Balance Disorders"). No está en las bases públicas; ahí deberían estar sus índices.</li>
+      <li><strong>Una goma espuma estándar.</strong> Los resultados sobre espuma dependen mucho de qué espuma se use. Para comparar entre sesiones tiene que ser siempre la misma.</li>
+      <li><strong>Seguridad.</strong> La prueba 4 es la que más hace caer. Alguien al lado, o una pared y una silla al alcance. En casa, mejor empezar solo con las pruebas 1 y 2.</li>
+      <li><strong>iPhone</strong> pide permiso para usar el sensor de movimiento y la página tiene que estar en https. PMS ya cumple las dos cosas.</li>
+      <li><strong>No es inteligencia artificial.</strong> Son cuentas fijas sobre lo que lee el sensor.</li>
+    </ul>
+  </section>
+
+  <footer>Los estabilogramas de la demo se generan con un modelo de oscilación simulado para cada perfil; no son mediciones. Para medir de verdad, <a href="./">abrí la prueba con el celular</a>.</footer>
+</div>
+
+<script>
+(() => {
+  // Cuatro pruebas del mCTSIB
+  const CONDS = [
+    { n: 1, titulo: "Ojos abiertos, piso", sentido: "Tiene los tres sentidos" },
+    { n: 2, titulo: "Ojos cerrados, piso", sentido: "Sin la vista" },
+    { n: 3, titulo: "Ojos abiertos, espuma", sentido: "Sin los pies" },
+    { n: 4, titulo: "Ojos cerrados, espuma", sentido: "Solo el oído interno" },
+  ];
+  // Desvío típico (grados, AP) de cada prueba según el perfil simulado. ML es un 70 % de AP.
+  const PERFILES = [
+    { id: "normal", nombre: "Equilibrio normal", sd: [0.22, 0.25, 0.28, 0.38] },
+    { id: "vista", nombre: "Depende de la vista", sd: [0.24, 0.58, 0.32, 0.85] },
+    { id: "pies", nombre: "Depende de los pies", sd: [0.24, 0.29, 0.62, 0.90] },
+    { id: "vestibular", nombre: "Oído interno débil", sd: [0.26, 0.32, 0.34, 1.30] },
+  ];
+  const FS = 50, DUR = 30, N = FS * DUR, ESCALA = 3; // ±3° en el dibujo, igual para las cuatro
+
+  // RNG con semilla: la demo da siempre lo mismo
+  function rng(seed) { let s = seed >>> 0; return () => { s = (s + 0x6D2B79F5) >>> 0; let t = s; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }
+  function gauss(r) { let u = 0, v = 0; while (!u) u = r(); while (!v) v = r(); return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v); }
+
+  // Oscilación tipo Ornstein-Uhlenbeck (vuelve al centro) + un temblor chico, después pasa-bajos
+  function simular(sd, seed) {
+    const r = rng(seed), dt = 1 / FS, th = 0.9;
+    const sig = (x) => x * Math.sqrt(2 * th);
+    let ap = 0, ml = 0, fap = 0, fml = 0;
+    const a = 1 - Math.exp(-2 * Math.PI * 4 * dt);
+    const out = [];
+    for (let i = 0; i < N + 200; i++) {
+      ap += -th * ap * dt + sig(sd) * Math.sqrt(dt) * gauss(r);
+      ml += -th * ml * dt + sig(sd * 0.7) * Math.sqrt(dt) * gauss(r);
+      const tap = ap + 0.02 * gauss(r), tml = ml + 0.02 * gauss(r);
+      fap += a * (tap - fap); fml += a * (tml - fml);
+      if (i >= 200) out.push([fml, fap]);
+    }
+    return out;
+  }
+
+  function medir(pts) {
+    const n = pts.length;
+    let mx = 0, my = 0; for (const [x, y] of pts) { mx += x; my += y; } mx /= n; my /= n;
+    let vx = 0, vy = 0, c = 0, path = 0;
+    for (let i = 0; i < n; i++) {
+      const x = pts[i][0] - mx, y = pts[i][1] - my;
+      vx += x * x; vy += y * y; c += x * y;
+      if (i) path += Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1]);
+    }
+    vx /= n; vy /= n; c /= n;
+    const det = Math.max(0, vx * vy - c * c);
+    return { mx, my, vx, vy, c, rmsML: Math.sqrt(vx), rmsAP: Math.sqrt(vy), vel: path / (n / FS), area: Math.PI * 5.991 * Math.sqrt(det) };
+  }
+
+  const css = (k) => getComputedStyle(document.documentElement).getPropertyValue(k).trim();
+  const fmt = (x, d = 2) => x.toLocaleString("es-UY", { minimumFractionDigits: d, maximumFractionDigits: d });
+
+  function dibujar(cv, pts, m, hasta) {
+    const dpr = Math.min(devicePixelRatio || 1, 2), w = cv.clientWidth || 240;
+    if (cv.width !== Math.round(w * dpr)) { cv.width = Math.round(w * dpr); cv.height = Math.round(w * dpr); }
+    const g = cv.getContext("2d"); g.setTransform(dpr, 0, 0, dpr, 0, 0); g.clearRect(0, 0, w, w);
+    const pad = 22, s = (w / 2 - pad) / ESCALA, cx = w / 2, cy = w / 2;
+    const X = (x) => cx + x * s, Y = (y) => cy - y * s;
+    g.strokeStyle = css("--grid"); g.lineWidth = 1;
+    for (let d = -ESCALA; d <= ESCALA; d++) {
+      g.beginPath(); g.moveTo(X(d), Y(-ESCALA)); g.lineTo(X(d), Y(ESCALA)); g.stroke();
+      g.beginPath(); g.moveTo(X(-ESCALA), Y(d)); g.lineTo(X(ESCALA), Y(d)); g.stroke();
+    }
+    g.strokeStyle = css("--line"); g.beginPath(); g.moveTo(X(0), Y(-ESCALA)); g.lineTo(X(0), Y(ESCALA)); g.moveTo(X(-ESCALA), Y(0)); g.lineTo(X(ESCALA), Y(0)); g.stroke();
+    g.fillStyle = css("--ink-soft"); g.font = `11px ${css("--font-mono")}`; g.textBaseline = "middle";
+    g.textAlign = "left"; g.fillText(`+${ESCALA}°`, X(ESCALA) - 22, Y(0) - 8);
+    g.textAlign = "center"; g.fillText("AP", X(0) + 14, Y(ESCALA) + 4); g.fillText("ML", X(ESCALA) - 10, Y(0) + 10);
+    const k = Math.min(pts.length, hasta);
+    g.strokeStyle = css("--trace"); g.lineWidth = 1.1; g.globalAlpha = 0.85; g.beginPath();
+    for (let i = 0; i < k; i++) { const x = X(pts[i][0] - m.mx), y = Y(pts[i][1] - m.my); i ? g.lineTo(x, y) : g.moveTo(x, y); }
+    g.stroke(); g.globalAlpha = 1;
+    if (k >= pts.length) {
+      // Elipse del 95 %: ejes de la matriz de covarianza
+      const tr = m.vx + m.vy, dt = m.vx * m.vy - m.c * m.c, disc = Math.sqrt(Math.max(0, tr * tr / 4 - dt));
+      const l1 = tr / 2 + disc, l2 = Math.max(0, tr / 2 - disc), ang = Math.atan2(l1 - m.vx, m.c || 1e-9);
+      g.strokeStyle = css("--ellipse"); g.lineWidth = 2;
+      g.beginPath(); g.ellipse(X(0), Y(0), Math.sqrt(5.991 * l1) * s, Math.sqrt(5.991 * l2) * s, -ang, 0, 2 * Math.PI); g.stroke();
+    }
+  }
+
+  const $ = (id) => document.getElementById(id);
+  let perfil = PERFILES[0], datos = [], anim = 0;
+
+  // Armado de la UI
+  PERFILES.forEach((p) => {
+    const b = document.createElement("button"); b.type = "button"; b.textContent = p.nombre; b.id = `perfil-${p.id}`;
+    b.addEventListener("click", () => { perfil = p; render(); });
+    $("perfiles").appendChild(b);
+  });
+  CONDS.forEach((c) => {
+    const el = document.createElement("div"); el.className = "cond";
+    el.innerHTML = `<div class="cond-title"><span class="n">Prueba ${c.n}</span><h3></h3></div><span class="sense"></span><canvas role="img"></canvas><dl class="metrics"></dl>`;
+    el.querySelector("h3").textContent = c.titulo; el.querySelector(".sense").textContent = c.sentido;
+    $("conds").appendChild(el);
+  });
+
+  function render(hasta = Infinity) {
+    document.querySelectorAll("#perfiles button").forEach((b) => b.setAttribute("aria-pressed", String(b.id === `perfil-${perfil.id}`)));
+    const base = PERFILES.indexOf(perfil) * 10 + 7;
+    datos = perfil.sd.map((sd, i) => { const pts = simular(sd, base + i); return { pts, m: medir(pts) }; });
+    pintar(hasta);
+    resultado();
+  }
+  function pintar(hasta) {
+    const cards = $("conds").children;
+    datos.forEach((d, i) => {
+      const cv = cards[i].querySelector("canvas");
+      cv.setAttribute("aria-label", `Estabilograma de la prueba ${i + 1}: área ${fmt(d.m.area)} grados cuadrados`);
+      dibujar(cv, d.pts, d.m, hasta);
+      cards[i].querySelector("dl").innerHTML =
+        `<dt>RMS AP</dt><dd class="mono">${fmt(d.m.rmsAP)}°</dd><dt>RMS ML</dt><dd class="mono">${fmt(d.m.rmsML)}°</dd>` +
+        `<dt>Velocidad</dt><dd class="mono">${fmt(d.m.vel)}°/s</dd><dt>Área 95 %</dt><dd class="mono">${fmt(d.m.area)}°²</dd>`;
+    });
+  }
+  function resultado() {
+    const a1 = datos[0].m.area;
+    const R = [
+      { k: "Vista", sub: "Prueba 2 ÷ prueba 1 (Romberg)", v: datos[1].m.area / a1, frase: "cuando cierra los ojos", sentido: "la vista" },
+      { k: "Pies", sub: "Prueba 3 ÷ prueba 1", v: datos[2].m.area / a1, frase: "cuando se para sobre la espuma", sentido: "lo que sienten los pies" },
+      { k: "Oído interno", sub: "Prueba 4 ÷ prueba 1", v: datos[3].m.area / a1, frase: "cuando solo le queda el oído interno", sentido: "el oído interno" },
+    ];
+    const max = Math.max(...R.map((r) => r.v), 1);
+    const topVis = R[0].v >= R[1].v ? 0 : 1;
+    $("ratios").innerHTML = `<span class="eyebrow">Cocientes contra la prueba 1</span>` + R.map((r, i) =>
+      `<div class="ratio"><span class="lbl">${r.k}<small>${r.sub}</small></span><span class="val">× ${fmt(r.v, 1)}</span>` +
+      `<div class="bar"><i class="${i === topVis ? "top" : ""}" style="width:${(100 * r.v / max).toFixed(1)}%"></i></div></div>`).join("");
+    // Lectura descriptiva: compara vista contra pies; el oído interno se lee relativo a la suma de los dos
+    const dep = R[topVis], otro = R[1 - topVis];
+    const esperado = R[0].v * R[1].v; // si los dos aportes se sumaran sin más, la prueba 4 rondaría este número
+    const vest = R[2].v / Math.max(esperado, 1);
+    let txt;
+    if (dep.v < 1.8 && otro.v < 1.8) txt = `Sacarle un sentido por vez le cambia poco: la oscilación crece menos del doble ${R[0].frase} y ${R[1].frase}.`;
+    else txt = `La oscilación crece más ${dep.frase} (× ${fmt(dep.v, 1)}) que ${otro.frase} (× ${fmt(otro.v, 1)}): para sostenerse se apoya más en ${dep.sentido}.`;
+    if (vest > 2.5) txt += ` En la prueba 4 crece bastante más de lo que se esperaría combinando las otras dos, lo que apunta a que el oído interno no le alcanza para compensar.`;
+    $("reading").innerHTML = `<span class="eyebrow">Qué muestra este perfil</span><p></p><p class="fine">Lectura descriptiva sobre datos simulados. No hay puntos de corte clínicos cargados: esos tienen que salir de bibliografía antes de usar esto con pacientes.</p>`;
+    $("reading").querySelector("p").textContent = txt;
+  }
+
+  // Reproducir: dibuja las cuatro pruebas a la vez, 6 veces más rápido que en la realidad
+  $("play").addEventListener("click", () => {
+    cancelAnimationFrame(anim);
+    if (matchMedia("(prefers-reduced-motion: reduce)").matches) { pintar(Infinity); return; }
+    const t0 = performance.now(), total = (DUR / 6) * 1000;
+    const step = (t) => { const p = Math.min(1, (t - t0) / total); pintar(Math.floor(p * N)); if (p < 1) anim = requestAnimationFrame(step); else pintar(Infinity); };
+    anim = requestAnimationFrame(step);
+  });
+  addEventListener("resize", () => pintar(Infinity));
+  matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => pintar(Infinity));
+  new MutationObserver(() => pintar(Infinity)).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+  render();
+})();
+</script>
+
+</body>
+</html>
